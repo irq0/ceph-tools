@@ -4,7 +4,7 @@
 Print Ceph cluster stats in graphite format
 """
 
-import sys
+import os
 import time
 import json
 import re
@@ -104,13 +104,17 @@ def print_graphite(data, now, prefix):
     for key, val in data:
         print "{}.{}".format(prefix, key), val, now
 
-def setup(conf):
-    rados_handle = rados.Rados(conffile=conf)
+def setup():
+    conf = os.environ.get("CEPH_CONF", "/etc/ceph/ceph.conf")
+    name = os.environ.get("CEPH_NAME", "client.admin")
+
+    rados_handle = rados.Rados(conffile=conf,
+                               name=name)
     rados_handle.connect()
     return rados_handle
 
 def main():
-    rados_handle = setup(conf=sys.argv[1])
+    rados_handle = setup()
 
     print_graphite(pg_stats(rados_handle), int(time.time()), "ceph.cluster")
     print_graphite(rados_stat(rados_handle), int(time.time()), "ceph.cluster")
